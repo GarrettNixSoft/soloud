@@ -17,9 +17,9 @@ local WITH_MINIAUDIO = 0
 local WITH_NULL = 1
 local WITH_TOOLS = 0
 
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
 	WITH_WINMM = 1
-elseif (os.is("macosx")) then
+elseif (os.istarget("macosx")) then
 	WITH_COREAUDIO = 1
 else
 	WITH_ALSA = 1
@@ -167,7 +167,7 @@ if _OPTIONS["soloud-devel"] then
     WITH_MINIAUDIO = 1
     WITH_OSS = 1
     WITH_NOSOUND = 1
-    if (os.is("Windows")) then
+    if (os.istarget("Windows")) then
     	WITH_XAUDIO2 = 0
     	WITH_WINMM = 1
     	WITH_WASAPI = 1
@@ -189,7 +189,7 @@ if _OPTIONS["with-common-backends"] then
     WITH_NOSOUND = 1
     WITH_MINIAUDIO = 0
 
-    if (os.is("Windows")) then
+    if (os.istarget("Windows")) then
     	WITH_XAUDIO2 = 0
     	WITH_WINMM = 1
     	WITH_WASAPI = 1
@@ -383,9 +383,9 @@ if _OPTIONS["with-native-only"] then
 	WITH_OSS = 0
 	WITH_MINIAUDIO = 0
 	WITH_NOSOUND = 0
-	if (os.is("Windows")) then
+	if (os.istarget("Windows")) then
 		WITH_WINMM = 1
-	elseif (os.is("macosx")) then
+	elseif (os.istarget("macosx")) then
 		WITH_COREAUDIO = 1
 	else
 	  WITH_OSS = 1
@@ -424,24 +424,26 @@ solution "SoLoud"
 	startproject "simplest"	
 	targetdir "../bin"
 	debugdir "../bin"
-	flags { "NoExceptions", "NoRTTI", "NoPCH" }
-    if (os.is("Windows")) then flags {"StaticRuntime"} end
-	if (os.is("Windows")) then defines { "_CRT_SECURE_NO_WARNINGS" } end
-    configuration { "x32", "Debug" }
+	flags { "NoPCH" }
+    if (os.istarget("Windows")) then staticruntime "on" end
+	if (os.istarget("Windows")) then defines { "_CRT_SECURE_NO_WARNINGS" } end
+    filter { "x32", "Debug" }
         targetsuffix "_x86_d"   
-    configuration { "x32", "Release" }
-		flags {	"EnableSSE2" }
+    filter { "x32", "Release" }
+		vectorextensions "SSE2"
         targetsuffix "_x86"
-    configuration { "x64", "Debug" }
+    filter { "x64", "Debug" }
         targetsuffix "_x64_d"    
-    configuration { "x64", "Release" }
+    filter { "x64", "Release" }
         targetsuffix "_x64"
-    configuration { "Release" }
-    	flags { "Optimize", "OptimizeSpeed", "NoEditAndContinue", "No64BitChecks" }   
+    filter { "Release" }
+		optimize "speed"
+		editandcontinue "off"
+    	flags { "No64BitChecks" }   
 		defines { "NDEBUG" }
 		objdir (buildroot .. "/release")
-    configuration { "Debug" }
-		flags {"Symbols" }
+    filter { "Debug" }
+		symbols "on"
 		defines { "DEBUG" }
 		objdir (buildroot .. "/debug")
 	
@@ -450,14 +452,14 @@ solution "SoLoud"
 	--       doesn't do this well on it's own and is recommended to setup this
 	--       manually. See https://github.com/bkaradzic/bx/blob/master/scripts/toolchain.lua
 if (WITH_VITA_HOMEBREW == 0) then
-	configuration { "gmake" }
+	filter { "gmake" }
 		buildoptions { 
 			"-msse4.1", 
 			"-fPIC"
 		}
 end
 
-    configuration {}
+    filter {}
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
@@ -481,7 +483,7 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -510,7 +512,7 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
         end
@@ -540,7 +542,7 @@ end
 
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -569,7 +571,7 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -826,7 +828,7 @@ if (WITH_TOOLS == 1) then
 
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -888,7 +890,7 @@ end
 	}
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -919,7 +921,7 @@ end
 	}
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -955,7 +957,7 @@ end
 
 		links {"SoloudStatic"}
 
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
 	linkoptions { "/DEF:\"../../src/c_api/soloud.def\"" }
 end
 
@@ -972,11 +974,11 @@ end
 if (WITH_SDL2 == 1 or WITH_SDL2STATIC) then
 
 function sdl2_lib()
-    configuration { "x32" } 
+    filter { "x32" } 
         libdirs { sdl2_lib_x86 }
-    configuration { "x64" } 
+    filter { "x64" } 
         libdirs { sdl2_lib_x64 }
-    configuration {}
+    filter {}
 end
 
 function CommonDemo(_name)
@@ -1008,10 +1010,10 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic", "SoloudDemoCommon", "SDL2main", "SDL2"}
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
         links {"opengl32"}
 end
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		  links { "GL" }
@@ -1057,11 +1059,11 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic", "SDL2main", "SDL2"}
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
         links {"opengl32"}
         defines {"__WINDOWS_MM__"}
 end
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  defines { "__LINUX_ALSA__"}
 		  links { "pthread" }
 		  links { "dl" }
