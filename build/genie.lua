@@ -17,9 +17,9 @@ local WITH_MINIAUDIO = 0
 local WITH_NULL = 1
 local WITH_TOOLS = 0
 
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
 	WITH_WINMM = 1
-elseif (os.is("macosx")) then
+elseif (os.istarget("macosx")) then
 	WITH_COREAUDIO = 1
 else
 	WITH_ALSA = 1
@@ -189,7 +189,7 @@ if _OPTIONS["with-common-backends"] then
     WITH_NOSOUND = 1
     WITH_MINIAUDIO = 0
 
-    if (os.is("Windows")) then
+    if (os.istarget("Windows")) then
     	WITH_XAUDIO2 = 0
     	WITH_WINMM = 1
     	WITH_WASAPI = 1
@@ -383,9 +383,9 @@ if _OPTIONS["with-native-only"] then
 	WITH_OSS = 0
 	WITH_MINIAUDIO = 0
 	WITH_NOSOUND = 0
-	if (os.is("Windows")) then
+	if (os.istarget("Windows")) then
 		WITH_WINMM = 1
-	elseif (os.is("macosx")) then
+	elseif (os.istarget("macosx")) then
 		WITH_COREAUDIO = 1
 	else
 	  WITH_OSS = 1
@@ -418,30 +418,49 @@ print ("")
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-solution "SoLoud"
-  location(buildroot)
-	configurations { "Debug", "Release" }
-	startproject "simplest"	
-	targetdir "../bin"
-	debugdir "../bin"
-	flags { "NoExceptions", "NoRTTI", "NoPCH" }
-    if (os.is("Windows")) then flags {"StaticRuntime"} end
-	if (os.is("Windows")) then defines { "_CRT_SECURE_NO_WARNINGS" } end
-    configuration { "x32", "Debug" }
+project "SoLoud"
+	kind "StaticLib"
+	language "C++"
+	staticruntime "on"
+	
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	
+	flags { "NoPCH" }
+	
+	files {
+		"../src/audiosource/**.c*",
+		"../src/filter/**.c*",
+		"../src/core/**.c*",
+		"../src/backend/winmm/**.c*"
+	}
+
+	includedirs {
+		"../src/**",
+	    "../include"
+	}
+	
+	if (os.istarget("Windows")) then defines { "_CRT_SECURE_NO_WARNINGS" } end
+		
+	if (WITH_WINMM) then defines { "WITH_WINMM" } end
+	
+    filter { "x32", "Debug" }
         targetsuffix "_x86_d"   
-    configuration { "x32", "Release" }
-		flags {	"EnableSSE2" }
+    filter { "x32", "Release" }
+		vectorextensions "SSE2"
         targetsuffix "_x86"
-    configuration { "x64", "Debug" }
-        targetsuffix "_x64_d"    
-    configuration { "x64", "Release" }
+    filter { "x64", "Debug" }
+        targetsuffix "_x64_d"
+    filter { "x64", "Release" }
         targetsuffix "_x64"
-    configuration { "Release" }
-    	flags { "Optimize", "OptimizeSpeed", "NoEditAndContinue", "No64BitChecks" }   
+    filter "configurations:Release"
+    	flags { "No64BitChecks" }   
 		defines { "NDEBUG" }
+		optimize "Speed"
+		editandcontinue "Off"
 		objdir (buildroot .. "/release")
-    configuration { "Debug" }
-		flags {"Symbols" }
+    filter "configurations:Debug"
+		symbols "On"
 		defines { "DEBUG" }
 		objdir (buildroot .. "/debug")
 	
@@ -450,14 +469,14 @@ solution "SoLoud"
 	--       doesn't do this well on it's own and is recommended to setup this
 	--       manually. See https://github.com/bkaradzic/bx/blob/master/scripts/toolchain.lua
 if (WITH_VITA_HOMEBREW == 0) then
-	configuration { "gmake" }
+	filter { "gmake" }
 		buildoptions { 
 			"-msse4.1", 
 			"-fPIC"
 		}
 end
 
-    configuration {}
+    filter {}
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
@@ -481,127 +500,127 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
 
 		targetname "simplest"
 
--- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
+															  
 
-  project "welcome"
-	kind "ConsoleApp"
-	language "C++"
-	files {
-	  "../demos/welcome/**.c*"
-	  }
-	includedirs {
-	  "../include"
-	}
-if (WITH_ALSA == 1) then
-	links {"asound"}
-end
-if (WITH_JACK == 1) then
-	links { "jack" }
-end
-if (WITH_COREAUDIO == 1) then
-	links {"AudioToolbox.framework"}
-end
+				   
+				  
+			   
+		
+						   
+	
+			  
+			   
+  
+						
+				 
+   
+						
+				 
+   
+							 
+								 
+   
 
-		links {"SoloudStatic"}
-		if (not os.is("windows")) then
-		  links { "pthread" }
-		  links { "dl" }
-        end
+						
+								
+					   
+				  
+		   
 
-		targetname "welcome"
+					  
 
--- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
+															  
 
-  project "null"
-	kind "ConsoleApp"
-	language "C++"
-	files {
-	  "../demos/null/**.c*"
-	  }
-	includedirs {
-	  "../include"
-	}
-if (WITH_ALSA == 1) then
-	links {"asound"}
-end
-if (WITH_JACK == 1) then
-	links { "jack" }
-end
-if (WITH_COREAUDIO == 1) then
-	links {"AudioToolbox.framework"}
-end
+				
+				  
+			   
+		
+						
+	
+			  
+			   
+  
+						
+				 
+   
+						
+				 
+   
+							 
+								 
+   
 
 
-		links {"SoloudStatic"}
-		if (not os.is("windows")) then
-		  links { "pthread" }
-		  links { "dl" }
-		end
+						
+								
+					   
+				  
+	 
 
-		targetname "null"
-
--- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
-
-  project "enumerate"
-	kind "ConsoleApp"
-	language "C++"
-	files {
-	  "../demos/enumerate/**.c*"
-	  }
-	includedirs {
-	  "../include"
-	}
-if (WITH_ALSA == 1) then
-	links {"asound"}
-end
-if (WITH_JACK == 1) then
-	links { "jack" }
-end
-if (WITH_COREAUDIO == 1) then
-	links {"AudioToolbox.framework"}
-end
-
-		links {"SoloudStatic"}
-		if (not os.is("windows")) then
-		  links { "pthread" }
-		  links { "dl" }
-		end
-
-		targetname "enumerate"
+				   
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-if (WITH_SDL2 == 1 or WITH_SDL2STATIC) then
+					 
+				  
+			   
+		
+							 
+	
+			  
+			   
+  
+						
+				 
+   
+						
+				 
+   
+							 
+								 
+   
 
-	project "SoloudDemoCommon"
-		kind "StaticLib"
-		targetdir "../lib"
-		language "C++"
+						
+								
+					   
+				  
+	 
 
-	files {
-	  "../demos/common/**.c*",
-	  "../demos/common/imgui/**.c*",
-	  "../demos/common/glew/GL/**.c*"
-	  }
-	includedirs {
-	  "../include",
-	  "../demos/common",
-	  "../demos/common/imgui",
-	  "../demos/common/glew",
-	  sdl2_include
-	}
-	defines { "GLEW_STATIC" }
+						
 
-		targetname "solouddemocommon"
-end
--- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
+															  
+
+										   
+
+						   
+				  
+					
+				
+
+		
+						   
+								 
+								  
+	
+			  
+				
+					 
+						   
+						  
+			   
+  
+						  
+
+							   
+   
+															  
 
 	project "SoloudStatic"
 		kind "StaticLib"
@@ -826,7 +845,7 @@ if (WITH_TOOLS == 1) then
 
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -888,7 +907,7 @@ end
 	}
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -919,7 +938,7 @@ end
 	}
 
 		links {"SoloudStatic"}
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		end
@@ -938,30 +957,30 @@ end
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-	project "SoloudDynamic"
-		kind "SharedLib"
-		targetdir "../lib"
-		language "C++"
-		files
-		{
-		  "../src/c_api/**.c*"
-		}
+						
+				  
+					
+				
+	   
+   
+						
+   
 
-		includedirs
-		{
-		  "../src/**",
-		  "../include"
-		}
+			 
+   
+				
+				
+   
 
-		links {"SoloudStatic"}
+						
 
-if (os.is("Windows")) then
-	linkoptions { "/DEF:\"../../src/c_api/soloud.def\"" }
-end
+						  
+													  
+   
 
-		targetname "soloud"
-		implibdir("../lib")
-		implibname("soloud")
+					 
+					 
+					  
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
@@ -1057,11 +1076,11 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic", "SDL2main", "SDL2"}
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
         links {"opengl32"}
         defines {"__WINDOWS_MM__"}
 end
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  defines { "__LINUX_ALSA__"}
 		  links { "pthread" }
 		  links { "dl" }
