@@ -167,7 +167,7 @@ if _OPTIONS["soloud-devel"] then
     WITH_MINIAUDIO = 1
     WITH_OSS = 1
     WITH_NOSOUND = 1
-    if (os.is("Windows")) then
+    if (os.istarget("Windows")) then
     	WITH_XAUDIO2 = 0
     	WITH_WINMM = 1
     	WITH_WASAPI = 1
@@ -507,65 +507,119 @@ end
 
 		targetname "simplest"
 
-															  
+-- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-				   
-				  
-			   
-		
-						   
-	
-			  
-			   
-  
-						
-				 
-   
-						
-				 
-   
-							 
-								 
-   
+  project "welcome"
+	kind "ConsoleApp"
+	language "C++"
+	files {
+	  "../demos/welcome/**.c*"
+	  }
+	includedirs {
+	  "../include"
+	}
+if (WITH_ALSA == 1) then
+	links {"asound"}
+end
+if (WITH_JACK == 1) then
+	links { "jack" }
+end
+if (WITH_COREAUDIO == 1) then
+	links {"AudioToolbox.framework"}
+end
 
-						
-								
-					   
-				  
-		   
+		links {"SoloudStatic"}
+		if (not os.istarget("windows")) then
+		  links { "pthread" }
+		  links { "dl" }
+        end
 
-					  
+		targetname "welcome"
 
-															  
+-- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-				
-				  
-			   
-		
-						
-	
-			  
-			   
-  
-						
-				 
-   
-						
-				 
-   
-							 
-								 
-   
+  project "null"
+	kind "ConsoleApp"
+	language "C++"
+	files {
+	  "../demos/null/**.c*"
+	  }
+	includedirs {
+	  "../include"
+	}
+if (WITH_ALSA == 1) then
+	links {"asound"}
+end
+if (WITH_JACK == 1) then
+	links { "jack" }
+end
+if (WITH_COREAUDIO == 1) then
+	links {"AudioToolbox.framework"}
+end
 
 
-						
-								
-					   
-				  
-	 
+		links {"SoloudStatic"}
+		if (not os.istarget("windows")) then
+		  links { "pthread" }
+		  links { "dl" }
+		end
 
-				   
+		targetname "null"
 
+-- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
+
+  project "enumerate"
+	kind "ConsoleApp"
+	language "C++"
+	files {
+	  "../demos/enumerate/**.c*"
+	  }
+	includedirs {
+	  "../include"
+	}
+if (WITH_ALSA == 1) then
+	links {"asound"}
+end
+if (WITH_JACK == 1) then
+	links { "jack" }
+end
+if (WITH_COREAUDIO == 1) then
+	links {"AudioToolbox.framework"}
+end
+
+		links {"SoloudStatic"}
+		if (not os.istarget("windows")) then
+		  links { "pthread" }
+		  links { "dl" }
+		end
+
+		targetname "enumerate"
+
+-- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
+
+if (WITH_SDL2 == 1 or WITH_SDL2STATIC) then
+
+	project "SoloudDemoCommon"
+		kind "StaticLib"
+		targetdir "../lib"
+		language "C++"
+
+	files {
+	  "../demos/common/**.c*",
+	  "../demos/common/imgui/**.c*",
+	  "../demos/common/glew/GL/**.c*"
+	  }
+	includedirs {
+	  "../include",
+	  "../demos/common",
+	  "../demos/common/imgui",
+	  "../demos/common/glew",
+	  sdl2_include
+	}
+	defines { "GLEW_STATIC" }
+
+		targetname "solouddemocommon"
+end
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
 					 
@@ -957,30 +1011,30 @@ end
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
-						
-				  
-					
-				
-	   
-   
-						
-   
+	project "SoloudDynamic"
+		kind "SharedLib"
+		targetdir "../lib"
+		language "C++"
+		files
+		{
+		  "../src/c_api/**.c*"
+		}
 
-			 
-   
-				
-				
-   
+		includedirs
+		{
+		  "../src/**",
+		  "../include"
+		}
 
-						
+		links {"SoloudStatic"}
 
-						  
-													  
-   
+if (os.istarget("Windows")) then
+	linkoptions { "/DEF:\"../../src/c_api/soloud.def\"" }
+end
 
-					 
-					 
-					  
+		targetname "soloud"
+		implibdir("../lib")
+		implibname("soloud")
 
 -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< -- 8< --
 
@@ -991,11 +1045,11 @@ end
 if (WITH_SDL2 == 1 or WITH_SDL2STATIC) then
 
 function sdl2_lib()
-    configuration { "x32" } 
+    filter { "x32" } 
         libdirs { sdl2_lib_x86 }
-    configuration { "x64" } 
+    filter { "x64" } 
         libdirs { sdl2_lib_x64 }
-    configuration {}
+    filter {}
 end
 
 function CommonDemo(_name)
@@ -1027,10 +1081,10 @@ if (WITH_COREAUDIO == 1) then
 end
 
 		links {"SoloudStatic", "SoloudDemoCommon", "SDL2main", "SDL2"}
-if (os.is("Windows")) then
+if (os.istarget("Windows")) then
         links {"opengl32"}
 end
-		if (not os.is("windows")) then
+		if (not os.istarget("windows")) then
 		  links { "pthread" }
 		  links { "dl" }
 		  links { "GL" }
